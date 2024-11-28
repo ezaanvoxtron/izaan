@@ -1,30 +1,33 @@
-name: Deploy to AWS EC2
+name: Deploy to EC2
 
 on:
-  push:  # This triggers on any push to any branch
+  push:
     branches:
-      - '**'  # Optional, just in case you want to specify all branches
+      - '**'  # This triggers on push to any branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.AWS_EC2_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Deploy Code to EC2
-      run: |
-        ssh ${{ secrets.AWS_EC2_USER }}@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-          cd /var/www/myproject
-          git pull origin main  # Make sure this matches the correct branch you want to pull from
-          # Run additional commands if needed
-          # For example: npm install, composer install, etc.
-        EOF
+      - name: Deploy Code to EC2 (except for main)
+        run: |
+          # Check if the branch is not 'main'
+          if [ "${GITHUB_REF##*/}" != "main" ]; then
+            echo "Deploying branch: ${GITHUB_REF##*/}"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_HOST }} <<EOF
+              cd /var/www/myproject
+              git pull origin ${GITHUB_REF##*/}  # Pull the branch that triggered the action
+            EOF
+          else
+            echo "Skipped deployment for the main branch."
+          fi
