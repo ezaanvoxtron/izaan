@@ -27,7 +27,8 @@ jobs:
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_HOST }} <<EOF
               cd /var/www/myproject
               git pull origin ${GITHUB_REF##*/}  # Pull the branch that triggered the action
-            EOF
           else
             echo "Skipped deployment for the main branch."
           fi
+          EOF
+          
