@@ -21,15 +21,15 @@ jobs:
 
       - name: Deploy Code to EC2 (except for main)
         run: |
+          set -e  # Exit if any command fails
           echo "Branch name: ${GITHUB_REF##*/}"  # Debugging line to check the branch name
-          
-          # Check if the branch is not 'main'
           if [ "${GITHUB_REF##*/}" != "main" ]; then
             echo "Deploying branch: ${GITHUB_REF##*/}"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_HOST }} <<EOF
-            cd /var/www/myproject
-            git pull origin ${GITHUB_REF##*/}  # Pull the branch that triggered the action
-            EOF
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ubuntu@${{ secrets.AWS_EC2_HOST }} <<'EOF'
+              cd /var/www/myproject
+              git fetch origin  # Fetch latest refs
+              git pull origin ${GITHUB_REF##*/}  # Pull the branch that triggered the action
+EOF
           else
             echo "Skipped deployment for the main branch."
           fi
