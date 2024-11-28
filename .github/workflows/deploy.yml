@@ -29,7 +29,5 @@ jobs:
               cd /var/www/myproject
               git fetch origin  # Fetch latest refs
               git pull origin ${GITHUB_REF##*/}  # Pull the branch that triggered the action
-EOF
-          else
-            echo "Skipped deployment for the main branch."
-          fi
+          EOF
+        
